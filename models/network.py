@@ -188,6 +188,11 @@ class DenseLayer(nn.Module):
 
         self.dropout_rate = float(dropout_rate)
 
+    def bn_function(self, inputs):
+        concated_features = t.cat(inputs, 1)
+        bottleneck_output = self.conv1(self.relu1(self.norm1(concated_features)))
+        return bottleneck_output
+
     def forward(self, features):
         prev_features = features
         bottleneck_output = self.bn_function(prev_features)
