@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from torchnet import meter
 from models import configs
 from models import network
-from data.dataset import CatDogDataset
+from utils.dataset import CatDogDataset
 from utils.visualize import Visualizer
 from torchvision.models.densenet import load_state_dict_from_url
 

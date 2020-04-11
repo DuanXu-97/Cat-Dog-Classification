@@ -8,7 +8,7 @@ from torchnet import meter
 from sklearn.metrics import precision_score, recall_score, f1_score
 
 from models import network
-from data.dataset import CatDogDataset
+from utils.dataset import CatDogDataset
 from models import configs
 
 
