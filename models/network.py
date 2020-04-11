@@ -1,6 +1,7 @@
 import torch as t
 from torch import nn
 from torch.nn import functional as F
+from collections import OrderedDict
 from torchvision.models import densenet
 
 
@@ -174,14 +175,14 @@ class DenseLayer(nn.Module):
     def __init__(self, num_input_features, growth, bn_size, dropout_rate):
         super(DenseLayer, self).__init__()
 
-        self.dense_layer = nn.Sequential(
-            nn.BatchNorm2d(num_input_features),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(num_input_features, bn_size * growth, kernel_size=1, stride=1, bias=False),
-            nn.BatchNorm2d(bn_size * growth),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(bn_size * growth, growth, kernel_size=3, stride=1, padding=1, bias=False)
-        )
+        self.dense_layer = nn.Sequential(OrderedDict([
+            ('norm1', nn.BatchNorm2d(num_input_features)),
+            ('relu1', nn.ReLU(inplace=True)),
+            ('conv1', nn.Conv2d(num_input_features, bn_size * growth, kernel_size=1, stride=1, bias=False)),
+            ('norm2', nn.BatchNorm2d(bn_size * growth)),
+            ('relu2', nn.ReLU(inplace=True)),
+            ('conv2', nn.Conv2d(bn_size * growth, growth, kernel_size=3, stride=1, padding=1, bias=False)),
+        ]))
 
         self.dropout_rate = float(dropout_rate)
 
@@ -205,7 +206,7 @@ class DenseBlock(nn.ModuleDict):
                 bn_size=bn_size,
                 dropout_rate=dropout_rate,
             )
-            self.add_module('dense_layer_{i}'.format(i=i + 1), layer)
+            self.add_module('denselayer{i}'.format(i=i + 1), layer)
 
     def forward(self, init_features):
         features = [init_features]
@@ -220,15 +221,13 @@ class DenseNet121(BasicModule):
         super(DenseNet121, self).__init__()
         self.config = config
 
-        self.features = nn.Sequential(
-            nn.Conv2d(3, config.num_init_features, kernel_size=7, stride=2,
-                      padding=3, bias=False),
-            nn.BatchNorm2d(config.num_init_features),
-            nn.ReLU(inplace=True),
-            nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
-        )
+        self.features = nn.Sequential(OrderedDict([
+            ('conv0', nn.Conv2d(3, config.num_init_features, kernel_size=7, stride=2, padding=3, bias=False)),
+            ('norm0', nn.BatchNorm2d(config.num_init_features)),
+            ('relu0', nn.ReLU(inplace=True)),
+            ('pool0', nn.MaxPool2d(kernel_size=3, stride=2, padding=1)),
+        ]))
 
-        self.dense_blocks = nn.Sequential()
         num_features = config.num_init_features
         for i, num_layers in enumerate(config.blocks):
             block = DenseBlock(
@@ -238,19 +237,20 @@ class DenseNet121(BasicModule):
                 growth=config.growth,
                 dropout_rate=config.dropout_rate,
             )
-            self.dense_blocks.add_module('dense_block_{i}'.format(i=i + 1), block)
+            self.features.add_module('denseblock{i}'.format(i=i + 1), block)
             num_features = num_features + num_layers * config.growth
+
             if i != len(config.blocks) - 1:
-                trans = nn.Sequential(
-                    nn.BatchNorm2d(num_features),
-                    nn.ReLU(inplace=True),
-                    nn.Conv2d(num_features, num_features // 2, kernel_size=1, stride=1, bias=False),
-                    nn.AvgPool2d(kernel_size=2, stride=2)
-                )
-                self.dense_blocks.add_module('transition_{i}'.format(i=i + 1), trans)
+                trans = nn.Sequential(OrderedDict([
+                    ('norm', nn.BatchNorm2d(num_features)),
+                    ('relu', nn.ReLU(inplace=True)),
+                    ('conv', nn.Conv2d(num_features, num_features // 2, kernel_size=1, stride=1, bias=False)),
+                    ('pool', nn.AvgPool2d(kernel_size=2, stride=2))
+                ]))
+                self.dense_blocks.add_module('transition{i}'.format(i=i + 1), trans)
                 num_features = num_features // 2
 
-        self.bn = nn.BatchNorm2d(num_features)
+        self.features.add_module('norm5', nn.BatchNorm2d(num_features))
         self.fc = nn.Linear(num_features, config.num_classes)
 
         for m in self.modules():
@@ -264,8 +264,6 @@ class DenseNet121(BasicModule):
 
     def forward(self, x):
         x = self.features(x)
-        x = self.dense_blocks(x)
-        x = self.bn(x)
         x = F.relu(x, inplace=True)
         x = F.adaptive_avg_pool2d(x, (1, 1))
         x = t.flatten(x, 1)
