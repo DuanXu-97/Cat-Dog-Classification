@@ -19,8 +19,8 @@ from torchvision.models.densenet import load_state_dict_from_url
 def train(args):
     vis = Visualizer()
 
-    config = getattr(configs, args.model + 'Config')().eval()
-    model = getattr(network, args.model)().eval()
+    config = getattr(configs, args.model + 'Config')()
+    model = getattr(network, args.model)(config).eval()
 
     if args.pretrain and args.model == 'DenseNet121':
         pattern = re.compile(

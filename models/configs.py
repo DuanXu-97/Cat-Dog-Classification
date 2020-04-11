@@ -5,6 +5,7 @@ class ResNet34Config(object):
     use_gpu = True
     num_workers = 2
     print_freq = 10
+    num_classes = 2
 
     train_path = "../data/dogs-cats-images/dataset/training_set"
     test_path = "../data/dogs-cats-images/dataset/test_set"
@@ -24,6 +25,7 @@ class ResNet50Config(object):
     use_gpu = True
     num_workers = 2
     print_freq = 10
+    num_classes = 2
 
     train_path = "../data/dogs-cats-images/dataset/training_set"
     test_path = "../data/dogs-cats-images/dataset/test_set"

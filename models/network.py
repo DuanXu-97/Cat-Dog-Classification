@@ -59,7 +59,7 @@ class ResidualBlockBottleneck(nn.Module):
 
 class ResNet34(BasicModule):
 
-    def __init__(self, num_classes=10):
+    def __init__(self, config):
         super(ResNet34, self).__init__()
 
         self.pre = nn.Sequential(
@@ -77,7 +77,7 @@ class ResNet34(BasicModule):
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
 
-        self.fc = nn.Linear(512, num_classes)
+        self.fc = nn.Linear(512, config.num_classes)
 
     def _make_layer(self, channel, block_num, stride=1):
 
@@ -115,7 +115,7 @@ class ResNet34(BasicModule):
 
 
 class ResNet50(BasicModule):
-    def __init__(self, num_classes=10):
+    def __init__(self, config):
         super(ResNet50, self).__init__()
 
         self.pre = nn.Sequential(
@@ -133,7 +133,7 @@ class ResNet50(BasicModule):
 
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
 
-        self.fc = nn.Linear(512 * 4, num_classes)
+        self.fc = nn.Linear(512 * 4, config.num_classes)
 
     def _make_layer(self, channel, block_num, stride=1):
 

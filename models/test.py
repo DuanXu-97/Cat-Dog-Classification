@@ -14,8 +14,8 @@ from models import configs
 
 def test(args):
 
-    model = getattr(network, args.model)().eval()
-    config = getattr(configs, args.model + 'Config')().eval()
+    config = getattr(configs, args.model + 'Config')()
+    model = getattr(network, args.model)(config).eval()
 
     test_set = CatDogDataset(root_path=config.test_path, config=config, mode='test')
     test_dataloader = DataLoader(test_set, batch_size=config.batch_size, shuffle=False, num_workers=config.num_workers)
