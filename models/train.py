@@ -23,15 +23,16 @@ def train(args):
     model = getattr(network, args.model)(config).eval()
 
     if args.pretrain and args.model == 'DenseNet121':
-        pattern = re.compile(
-            r'^(.*denselayer\d+\.(?:norm|relu|conv))\.((?:[12])\.(?:weight|bias|running_mean|running_var))$')
-
+        pattern = re.compile(r'^(.*denselayer\d+\.(?:norm|relu|conv))\.((?:[12])\.(?:weight|bias|running_mean|running_var))$')
         state_dict = load_state_dict_from_url('https://download.pytorch.org/models/densenet121-a639ec97.pth', progress=False)
         for key in list(state_dict.keys()):
             res = pattern.match(key)
             if res:
                 new_key = res.group(1) + res.group(2)
                 state_dict[new_key] = state_dict[key]
+                del state_dict[key]
+        for key in list(state_dict.keys()):
+            if 'classifier' in key:
                 del state_dict[key]
         model.load_state_dict(state_dict)
 

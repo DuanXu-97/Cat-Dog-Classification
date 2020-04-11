@@ -253,7 +253,7 @@ class DenseNet121(BasicModule):
                 num_features = num_features // 2
 
         self.features.add_module('norm5', nn.BatchNorm2d(num_features))
-        self.classifier = nn.Linear(num_features, config.num_classes)
+        self.fc = nn.Linear(num_features, config.num_classes)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -269,7 +269,7 @@ class DenseNet121(BasicModule):
         x = F.relu(x, inplace=True)
         x = F.adaptive_avg_pool2d(x, (1, 1))
         x = t.flatten(x, 1)
-        logits = self.classifier(x)
+        logits = self.fc(x)
         output = F.softmax(logits, dim=1)
 
         return logits, output
