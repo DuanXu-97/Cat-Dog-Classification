@@ -15,7 +15,7 @@ class ResNet34Config(object):
 
     seed = 10
     batch_size = 64
-    epoch = 5
+    epoch = 10
     lr = 0.001
 
 
@@ -35,7 +35,7 @@ class ResNet50Config(object):
 
     seed = 10
     batch_size = 64
-    epoch = 5
+    epoch = 10
     lr = 0.001
 
 
@@ -61,7 +61,7 @@ class DenseNet121Config(object):
 
     seed = 10
     batch_size = 16
-    epoch = 5
+    epoch = 10
     lr = 0.001
 
 
