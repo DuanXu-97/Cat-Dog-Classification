@@ -6,10 +6,39 @@ import torch as t
 from torch.utils.data import DataLoader
 from torchnet import meter
 from sklearn.metrics import precision_score, recall_score, f1_score
-
 from models import network
 from utils.dataset import CatDogDataset
 from models import configs
+
+
+def cal_metrics(y_true, y_pred):
+
+    data_len = len(y_pred)
+
+    TP = 0
+    TN = 0
+    FP = 0
+    FN = 0
+
+    for i in range(data_len):
+        if int(y_true[i]) == 1 and int(y_pred[i]) == 1:
+            TP += 1
+        elif int(y_true[i]) == 1 and int(y_pred[i]) == 0:
+            FN += 1
+        elif int(y_true[i]) == 0 and int(y_pred[i]) == 1:
+            FP += 1
+        elif int(y_true[i]) == 0 and int(y_pred[i]) == 0:
+            TN += 1
+        else:
+            print("Error: Some error in category")
+
+    FPR = FP/(FP+TN)
+    FNR = FN/(TP+FN)
+    TPR = TP/(TP+FN)
+    P = TP/(TP+FP)
+    F1 = 2*P*TPR/(P+TPR)
+
+    return FP, FN, TP, TN, FPR, FNR, TPR, P, F1
 
 
 def test(args):
@@ -27,7 +56,7 @@ def test(args):
 
     y_true = []
     y_pred = []
-    test_confusion_matrix = meter.ConfusionMeter(10)
+    test_confusion_matrix = meter.ConfusionMeter(config.num_classes)
     test_confusion_matrix.reset()
 
     model.eval()
@@ -41,21 +70,14 @@ def test(args):
         y_pred.extend(test_logits.max(dim=1)[1].detach().tolist())
         test_confusion_matrix.add(test_logits.detach().squeeze(), test_label.type(t.LongTensor))
 
-    print(y_true[:100])
-    print(y_pred[:100])
-
     test_cm = test_confusion_matrix.value()
-    test_metrics = dict()
-    test_metrics['accuracy'] = 100. * (test_cm.diagonal().sum()) / (test_cm.sum())
-    test_metrics['precision'], test_metrics['recall'], test_metrics['f1'] = dict(), dict(), dict()
-    test_metrics['precision']['micro'] = precision_score(y_true, y_pred, labels=list(range(0, 10)), average='micro')
-    test_metrics['precision']['macro'] = precision_score(y_true, y_pred, labels=list(range(0, 10)), average='macro')
-    test_metrics['recall']['micro'] = recall_score(y_true, y_pred, labels=list(range(0, 10)), average='micro')
-    test_metrics['recall']['macro'] = recall_score(y_true, y_pred, labels=list(range(0, 10)), average='macro')
-    test_metrics['f1']['micro'] = f1_score(y_true, y_pred, labels=list(range(0, 10)), average='micro')
-    test_metrics['f1']['macro'] = f1_score(y_true, y_pred, labels=list(range(0, 10)), average='macro')
+    acc = 100. * (test_cm.diagonal().sum()) / (test_cm.sum())
+    FP, FN, TP, TN, FPR, FNR, TPR, P, F1 = cal_metrics(y_true, y_pred)
 
-    print("test_metrics:", test_metrics)
+    print('acc', acc)
+    print('FP: {FP}, FN: {FN}, TP: {TP}, TN: {TN}'.format(FP=FP, FN=FN, TP=TP, TN=TN))
+    print('FPR: {FPR}, FNR: {FNR}, TPR: {TPR}, P: {P}, F1: {F1}'.format(FPR=FPR, FNR=FNR, TPR=TPR, P=P, F1=F1))
+
     print("test_cm:\n{test_cm}".format(
         test_cm=str(test_cm),
     ))
