@@ -1,5 +1,5 @@
 
-class ResNetConfig(object):
+class ResNet34Config(object):
     model = 'ResNet'
     load_model_path = None
     use_gpu = True
@@ -18,7 +18,26 @@ class ResNetConfig(object):
     lr = 0.001
 
 
-class DenseNetConfig(object):
+class ResNet50Config(object):
+    model = 'ResNet'
+    load_model_path = None
+    use_gpu = True
+    num_workers = 2
+    print_freq = 10
+
+    train_path = "../data/dogs-cats-images/dataset/training_set"
+    test_path = "../data/dogs-cats-images/dataset/test_set"
+
+    train_image_nums = 8000
+    test_image_nums = 2000
+
+    seed = 10
+    batch_size = 64
+    epoch = 10
+    lr = 0.001
+
+
+class DenseNet121Config(object):
     model = 'DenseNet'
     load_model_path = None
     use_gpu = True
