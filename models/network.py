@@ -175,14 +175,16 @@ class DenseLayer(nn.Module):
     def __init__(self, num_input_features, growth, bn_size, dropout_rate):
         super(DenseLayer, self).__init__()
 
-        self.dense_layer = nn.Sequential(OrderedDict([
-            ('norm1', nn.BatchNorm2d(num_input_features)),
-            ('relu1', nn.ReLU(inplace=True)),
-            ('conv1', nn.Conv2d(num_input_features, bn_size * growth, kernel_size=1, stride=1, bias=False)),
-            ('norm2', nn.BatchNorm2d(bn_size * growth)),
-            ('relu2', nn.ReLU(inplace=True)),
-            ('conv2', nn.Conv2d(bn_size * growth, growth, kernel_size=3, stride=1, padding=1, bias=False)),
-        ]))
+        self.add_module('norm1', nn.BatchNorm2d(num_input_features)),
+        self.add_module('relu1', nn.ReLU(inplace=True)),
+        self.add_module('conv1', nn.Conv2d(num_input_features, bn_size *
+                                           growth, kernel_size=1, stride=1,
+                                           bias=False)),
+        self.add_module('norm2', nn.BatchNorm2d(bn_size * growth)),
+        self.add_module('relu2', nn.ReLU(inplace=True)),
+        self.add_module('conv2', nn.Conv2d(bn_size * growth, growth,
+                                           kernel_size=3, stride=1, padding=1,
+                                           bias=False)),
 
         self.dropout_rate = float(dropout_rate)
 
@@ -251,7 +253,7 @@ class DenseNet121(BasicModule):
                 num_features = num_features // 2
 
         self.features.add_module('norm5', nn.BatchNorm2d(num_features))
-        self.fc = nn.Linear(num_features, config.num_classes)
+        self.classifier = nn.Linear(num_features, config.num_classes)
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -267,7 +269,7 @@ class DenseNet121(BasicModule):
         x = F.relu(x, inplace=True)
         x = F.adaptive_avg_pool2d(x, (1, 1))
         x = t.flatten(x, 1)
-        logits = self.fc(x)
+        logits = self.classifier(x)
         output = F.softmax(logits, dim=1)
 
         return logits, output
