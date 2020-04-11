@@ -58,10 +58,6 @@ def train(args):
     train_loss_meter, valid_loss_meter = meter.AverageValueMeter(), meter.AverageValueMeter()
     train_confusion_matrix, valid_confusion_matrix = meter.ConfusionMeter(10), meter.ConfusionMeter(10)
 
-    best_valid_loss = 1e5
-    best_epoch = 0
-    dist_to_best = 0
-
     time_begin = time.clock()
 
     for epoch in range(config.epoch):
@@ -130,16 +126,6 @@ def train(args):
             train_cm=str(train_confusion_matrix.value()),
             valid_cm=str(valid_cm),
         ))
-
-        # early stop
-        if valid_loss_meter.value()[0] < best_valid_loss:
-            best_epoch = epoch
-            best_valid_loss = valid_loss_meter.value()[0]
-            dist_to_best = 0
-
-        dist_to_best += 1
-        if dist_to_best > 1:
-            break
 
     model.save(path=os.path.join(args.ckpts_dir, 'model.pth'))
     vis.save()
