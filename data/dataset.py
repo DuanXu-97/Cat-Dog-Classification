@@ -11,7 +11,7 @@ class CatDogDataset(data.Dataset):
         self.config = config
         self.mode = mode
 
-        dataset = ImageFolder(root=os.path.join(root_path))
+        self.dataset = ImageFolder(root=os.path.join(root_path))
 
         if mode == 'test':
             self.image_nums = config.test_image_nums
@@ -22,22 +22,17 @@ class CatDogDataset(data.Dataset):
         else:
             raise Exception('Error Mode.')
 
-        self.data = dataset[:][0]
-        self.labels = dataset[:][1]
-
         if mode == 'train':
             self.image_nums = config.train_image_nums * 0.7
-            self.data = self.data[:int(config.train_image_nums * 0.7)]
-            self.labels = self.labels[:int(config.train_image_nums * 0.7)]
+            self.dataset = self.dataset[:int(config.train_image_nums * 0.7)]
         elif mode == 'valid':
             self.image_nums = config.train_image_nums - config.train_image_nums * 0.7
-            self.data = self.data[int(config.train_image_nums * 0.7):]
-            self.labels = self.labels[int(config.train_image_nums * 0.7):]
+            self.dataset = self.dataset[int(config.train_image_nums * 0.7):]
 
     def __getitem__(self, index):
-        return T.ToTensor()(self.data[index]), self.labels[index]
+        return T.ToTensor()(self.dataset[index][0]), self.dataset[index][1]
 
     def __len__(self):
-        return self.data.shape[0]
+        return len(self.dataset)
 
 
