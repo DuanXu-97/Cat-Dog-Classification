@@ -31,9 +31,8 @@ class CatDogDataset(data.Dataset):
             self.image_nums = int(config.train_image_nums - config.train_image_nums * 0.8)
             for i in range(int(config.train_image_nums * 0.8), config.train_image_nums):
                 self.dataset.append(_dataset[i])
-
     def __getitem__(self, index):
-        return T.ToTensor()(self.dataset[index][0]), self.dataset[index][1]
+        return T.ToTensor()(T.Resize([400, 400])(self.dataset[index][0]), self.dataset[index][1]
 
     def __len__(self):
         return len(self.dataset)
