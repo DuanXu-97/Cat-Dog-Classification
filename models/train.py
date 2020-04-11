@@ -31,10 +31,11 @@ def train(args):
                 new_key = res.group(1) + res.group(2)
                 state_dict[new_key] = state_dict[key]
                 del state_dict[key]
-        for key in list(state_dict.keys()):
-            if 'classifier' in key:
-                del state_dict[key]
-        model.load_state_dict(state_dict)
+
+        model_dict = model.state_dict()
+        pretrained_dict = {k: v for k, v in state_dict.items() if k in model_dict}
+        model_dict.update(pretrained_dict)
+        model.load_state_dict(model_dict)
 
     train_set = CatDogDataset(root_path=config.train_path, config=config, mode='train')
     valid_set = CatDogDataset(root_path=config.train_path, config=config, mode='valid')
@@ -52,7 +53,7 @@ def train(args):
         model.cuda()
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=config.lr)
+    optimizer = optim.Adam(model.parameters(), lr=config.lr, weight_decay=1e-5)
 
     train_loss_meter, valid_loss_meter = meter.AverageValueMeter(), meter.AverageValueMeter()
     train_confusion_matrix, valid_confusion_matrix = meter.ConfusionMeter(10), meter.ConfusionMeter(10)
