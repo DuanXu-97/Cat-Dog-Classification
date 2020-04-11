@@ -60,7 +60,7 @@ class DenseNet121Config(object):
     test_image_nums = 2000
 
     seed = 10
-    batch_size = 64
+    batch_size = 16
     epoch = 10
     lr = 0.001
 

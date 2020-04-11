@@ -38,7 +38,7 @@ def train(args):
         model.load_state_dict(model_dict)
 
     train_set = CatDogDataset(root_path=config.train_path, config=config, mode='train')
-    valid_set = CatDogDataset(root_path=config.train_path, config=config, mode='valid')
+    valid_set = CatDogDataset(root_path=config.test_path, config=config, mode='test')
 
     train_dataloader = DataLoader(train_set, config.batch_size,
                                   shuffle=True,
@@ -138,7 +138,7 @@ def train(args):
             dist_to_best = 0
 
         dist_to_best += 1
-        if dist_to_best > 4:
+        if dist_to_best > 1:
             break
 
     model.save(path=os.path.join(args.ckpts_dir, 'model.pth'))

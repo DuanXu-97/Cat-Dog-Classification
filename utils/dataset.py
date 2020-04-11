@@ -10,30 +10,29 @@ class CatDogDataset(data.Dataset):
 
         self.config = config
         self.mode = mode
-        self.dataset = list()
 
-        _dataset = ImageFolder(root=os.path.join(root_path))
+        if mode == 'test' or mode == 'valid':
+            self.transforms = T.Compose([
+                T.Resize((280, 280)),
+                T.ToTensor(),
+                T.Normalize([0.5, 0.5, 0.5],
+                            [0.5, 0.5, 0.5])])
 
-        if mode == 'test':
-            self.image_nums = config.test_image_nums
-
-        elif mode == 'train' or mode == 'valid':
-            self.image_nums = config.train_image_nums
+        elif mode == 'train':
+            self.transforms = T.Compose([T.RandomRotation(30),
+                                         T.RandomHorizontalFlip(),
+                                         T.Resize((280, 280)),
+                                         T.ToTensor(),
+                                         T.Normalize([0.5, 0.5, 0.5],
+                                                     [0.5, 0.5, 0.5])])
 
         else:
             raise Exception('Error Mode.')
 
-        if mode == 'train':
-            self.image_nums = int(config.train_image_nums * 0.8)
-            for i in range(0, self.image_nums):
-                self.dataset.append(_dataset[i])
-        elif mode == 'valid':
-            self.image_nums = int(config.train_image_nums - config.train_image_nums * 0.8)
-            for i in range(int(config.train_image_nums * 0.8), config.train_image_nums):
-                self.dataset.append(_dataset[i])
-                
+        self.dataset = ImageFolder(root=os.path.join(root_path), transform=self.transforms)
+
     def __getitem__(self, index):
-        return T.ToTensor()(T.Resize([400, 400])(self.dataset[index][0])), self.dataset[index][1]
+        return self.dataset[index][0], self.dataset[index][1]
 
     def __len__(self):
         return len(self.dataset)
