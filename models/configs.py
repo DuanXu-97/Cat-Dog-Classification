@@ -14,7 +14,7 @@ class ResNet34Config(object):
     test_image_nums = 2000
 
     seed = 10
-    batch_size = 64
+    batch_size = 16
     epoch = 20
     lr = 0.001
 
@@ -34,7 +34,7 @@ class ResNet50Config(object):
     test_image_nums = 2000
 
     seed = 10
-    batch_size = 64
+    batch_size = 16
     epoch = 20
     lr = 0.001
 
