@@ -247,7 +247,7 @@ class DenseNet121(BasicModule):
                     ('conv', nn.Conv2d(num_features, num_features // 2, kernel_size=1, stride=1, bias=False)),
                     ('pool', nn.AvgPool2d(kernel_size=2, stride=2))
                 ]))
-                self.dense_blocks.add_module('transition{i}'.format(i=i + 1), trans)
+                self.features.add_module('transition{i}'.format(i=i + 1), trans)
                 num_features = num_features // 2
 
         self.features.add_module('norm5', nn.BatchNorm2d(num_features))
