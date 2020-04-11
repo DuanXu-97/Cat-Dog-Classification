@@ -64,7 +64,7 @@ class ResNet34(BasicModule):
         super(ResNet34, self).__init__()
 
         self.pre = nn.Sequential(
-            nn.Conv2d(1, 64, 7, 2, 3, bias=False),
+            nn.Conv2d(3, 64, 7, 2, 3, bias=False),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(3, 2, 1)
@@ -120,7 +120,7 @@ class ResNet50(BasicModule):
         super(ResNet50, self).__init__()
 
         self.pre = nn.Sequential(
-            nn.Conv2d(1, 64, 7, 2, 3, bias=False),
+            nn.Conv2d(3, 64, 7, 2, 3, bias=False),
             nn.BatchNorm2d(64),
             nn.ReLU(inplace=True),
             nn.MaxPool2d(3, 2, 1)
