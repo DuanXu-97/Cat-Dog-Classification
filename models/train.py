@@ -1,6 +1,7 @@
 import sys
 sys.path.append('../')
 import os
+import re
 import time
 import argparse
 import torch as t
@@ -10,15 +11,32 @@ from torch.utils.data import DataLoader
 from torchnet import meter
 from models import configs
 from models import network
-from data.dataset import MNIST
+from data.dataset import CatDogDataset
 from utils.visualize import Visualizer
+from torchvision.models.densenet import load_state_dict_from_url
 
 
-def train(args, config):
+def train(args):
     vis = Visualizer()
 
-    train_set = MNIST(data_path=config.train_data_path, label_path=config.train_label_path, config=config, mode='train')
-    valid_set = MNIST(data_path=config.train_data_path, label_path=config.train_label_path, config=config, mode='valid')
+    config = getattr(configs, args.model + 'Config')().eval()
+    model = getattr(network, args.model)().eval()
+
+    if args.pretrain and args.model == 'DenseNet121':
+        pattern = re.compile(
+            r'^(.*denselayer\d+\.(?:norm|relu|conv))\.((?:[12])\.(?:weight|bias|running_mean|running_var))$')
+
+        state_dict = load_state_dict_from_url('https://download.pytorch.org/models/densenet121-a639ec97.pth', progress=False)
+        for key in list(state_dict.keys()):
+            res = pattern.match(key)
+            if res:
+                new_key = res.group(1) + res.group(2)
+                state_dict[new_key] = state_dict[key]
+                del state_dict[key]
+        model.load_state_dict(state_dict)
+
+    train_set = CatDogDataset(root_path=config.train_path, config=config, mode='train')
+    valid_set = CatDogDataset(root_path=config.train_path, config=config, mode='valid')
 
     train_dataloader = DataLoader(train_set, config.batch_size,
                                   shuffle=True,
@@ -27,7 +45,6 @@ def train(args, config):
                                   shuffle=False,
                                   num_workers=config.num_workers)
 
-    model = getattr(network, args.model)().eval()
     if args.load_model_path:
         model.load(args.load_model_path)
     if args.use_gpu:
@@ -135,17 +152,17 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     parser.add_argument('--model', type=str, default='ResNet', help="model to be used")
+    parser.add_argument('--pretrain', action='store_true', help="whether use pretrained model")
     parser.add_argument('--use_gpu', action='store_true', help="whether use gpu")
     parser.add_argument('--load_model_path', type=str, default=None, help="Path of pre-trained model")
     parser.add_argument('--ckpts_dir', type=str, default=None, help="Dir to store checkpoints")
 
     args = parser.parse_args()
-    config = configs.DefaultConfig()
 
     if not os.path.exists(args.ckpts_dir):
         os.makedirs(args.ckpts_dir)
 
-    train(args, config)
+    train(args)
 
 
 

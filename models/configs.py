@@ -1,25 +1,48 @@
 
-class DefaultConfig(object):
+class ResNetConfig(object):
     model = 'ResNet'
     load_model_path = None
     use_gpu = True
     num_workers = 2
     print_freq = 10
 
-    train_data_path = "../data/train/train-images.gz"
-    train_label_path = "../data/train/train-labels.gz"
-    test_data_path = "../data/test/test-images.gz"
-    test_label_path = "../data/test/test-labels.gz"
+    train_path = "../data/dogs-cats-images/dataset/training_set"
+    test_path = "../data/dogs-cats-images/dataset/test_set"
 
-    num_channels = 1
-    image_size = 28
-    pixel_depth = 255
-    train_image_nums = 60000
-    test_image_nums = 10000
+    train_image_nums = 8000
+    test_image_nums = 2000
 
     seed = 10
     batch_size = 64
     epoch = 10
     lr = 0.001
+
+
+class DenseNetConfig(object):
+    model = 'DenseNet'
+    load_model_path = None
+    use_gpu = True
+    num_workers = 2
+    print_freq = 10
+
+    train_path = "../data/dogs-cats-images/dataset/training_set"
+    test_path = "../data/dogs-cats-images/dataset/test_set"
+
+    growth = 32
+    blocks = [6, 12, 24, 16]
+    num_init_features = 64
+    bn_size = 4
+    dropout_rate = 0.1
+    num_classes = 2
+
+    train_image_nums = 8000
+    test_image_nums = 2000
+
+    seed = 10
+    batch_size = 64
+    epoch = 10
+    lr = 0.001
+
+
 
 

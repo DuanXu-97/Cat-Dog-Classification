@@ -1,6 +1,7 @@
 import torch as t
 from torch import nn
 from torch.nn import functional as F
+from torchvision.models import densenet
 
 
 class BasicModule(nn.Module):
@@ -168,3 +169,107 @@ class ResNet50(BasicModule):
 
         return logits, output
 
+
+class DenseLayer(nn.Module):
+    def __init__(self, num_input_features, growth, bn_size, dropout_rate):
+        super(DenseLayer, self).__init__()
+
+        self.dense_layer = nn.Sequential(
+            nn.BatchNorm2d(num_input_features),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(num_input_features, bn_size * growth, kernel_size=1, stride=1, bias=False),
+            nn.BatchNorm2d(bn_size * growth),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(bn_size * growth, growth, kernel_size=3, stride=1, padding=1, bias=False)
+        )
+
+        self.dropout_rate = float(dropout_rate)
+
+    def forward(self, features):
+        prev_features = features
+        bottleneck_output = self.bn_function(prev_features)
+        new_features = self.conv2(self.relu2(self.norm2(bottleneck_output)))
+        if self.dropout_rate > 0:
+            new_features = F.dropout(new_features, p=self.dropout_rate,
+                                     training=self.training)
+        return new_features
+
+
+class DenseBlock(nn.ModuleDict):
+    def __init__(self, num_layers, num_input_features, bn_size, growth, dropout_rate):
+        super(DenseBlock, self).__init__()
+        for i in range(num_layers):
+            layer = DenseLayer(
+                num_input_features + i * growth,
+                growth=growth,
+                bn_size=bn_size,
+                dropout_rate=dropout_rate,
+            )
+            self.add_module('dense_layer_{i}'.format(i=i + 1), layer)
+
+    def forward(self, init_features):
+        features = [init_features]
+        for name, layer in self.items():
+            new_features = layer(features)
+            features.append(new_features)
+        return t.cat(features, 1)
+
+
+class DenseNet121(BasicModule):
+    def __init__(self, config):
+        super(DenseNet121, self).__init__()
+        self.config = config
+
+        self.features = nn.Sequential(
+            nn.Conv2d(3, config.num_init_features, kernel_size=7, stride=2,
+                      padding=3, bias=False),
+            nn.BatchNorm2d(config.num_init_features),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+        )
+
+        self.dense_blocks = nn.Sequential()
+        num_features = config.num_init_features
+        for i, num_layers in enumerate(config.blocks):
+            block = DenseBlock(
+                num_layers=num_layers,
+                num_input_features=num_features,
+                bn_size=config.bn_size,
+                growth=config.growth,
+                dropout_rate=config.dropout_rate,
+            )
+            self.dense_blocks.add_module('dense_block_{i}'.format(i=i + 1), block)
+            num_features = num_features + num_layers * config.growth
+            if i != len(config.blocks) - 1:
+                trans = nn.Sequential(
+                    nn.BatchNorm2d(num_features),
+                    nn.ReLU(inplace=True),
+                    nn.Conv2d(num_features, num_features // 2, kernel_size=1, stride=1, bias=False),
+                    nn.AvgPool2d(kernel_size=2, stride=2)
+                )
+                self.dense_blocks.add_module('transition_{i}'.format(i=i + 1), trans)
+                num_features = num_features // 2
+
+        self.bn = nn.BatchNorm2d(num_features)
+        self.fc = nn.Linear(num_features, config.num_classes)
+
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight)
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Linear):
+                nn.init.constant_(m.bias, 0)
+
+    def forward(self, x):
+        x = self.features(x)
+        x = self.dense_blocks(x)
+        x = self.bn(x)
+        x = F.relu(x, inplace=True)
+        x = F.adaptive_avg_pool2d(x, (1, 1))
+        x = t.flatten(x, 1)
+        logits = self.fc(x)
+        output = F.softmax(logits, dim=1)
+
+        return logits, output

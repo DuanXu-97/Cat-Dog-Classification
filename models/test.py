@@ -8,16 +8,18 @@ from torchnet import meter
 from sklearn.metrics import precision_score, recall_score, f1_score
 
 from models import network
-from data.dataset import MNIST
+from data.dataset import CatDogDataset
 from models import configs
 
 
-def test(args, config):
-
-    test_set = MNIST(data_path=config.test_data_path, label_path=config.test_label_path, config=config, mode='test')
-    test_dataloader = DataLoader(test_set, batch_size=config.batch_size, shuffle=False, num_workers=config.num_workers)
+def test(args):
 
     model = getattr(network, args.model)().eval()
+    config = getattr(configs, args.model + 'Config')().eval()
+
+    test_set = CatDogDataset(root_path=config.test_path, config=config, mode='test')
+    test_dataloader = DataLoader(test_set, batch_size=config.batch_size, shuffle=False, num_workers=config.num_workers)
+
     if args.load_model_path:
         model.load(args.load_model_path)
     if args.use_gpu:
@@ -67,6 +69,5 @@ if __name__ == '__main__':
     parser.add_argument('--load_model_path', type=str, required=True, help="Path of trained model")
 
     args = parser.parse_args()
-    config = configs.DefaultConfig()
 
-    test(args, config)
+    test(args)
