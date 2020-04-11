@@ -56,7 +56,7 @@ def train(args):
     optimizer = optim.Adam(model.parameters(), lr=config.lr, weight_decay=1e-5)
 
     train_loss_meter, valid_loss_meter = meter.AverageValueMeter(), meter.AverageValueMeter()
-    train_confusion_matrix, valid_confusion_matrix = meter.ConfusionMeter(10), meter.ConfusionMeter(10)
+    train_confusion_matrix, valid_confusion_matrix = meter.ConfusionMeter(config.num_classes), meter.ConfusionMeter(config.num_classes)
 
     time_begin = time.clock()
 
@@ -130,8 +130,6 @@ def train(args):
     model.save(path=os.path.join(args.ckpts_dir, 'model.pth'))
     vis.save()
     print("save model successfully")
-    print("best epoch: ", best_epoch)
-    print("best valid loss: ", best_valid_loss)
     time_end = time.clock()
     print('time cost: %.2f' % (time_end - time_begin))
 
